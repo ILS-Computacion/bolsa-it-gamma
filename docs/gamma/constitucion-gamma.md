@@ -104,7 +104,7 @@ Cada integrante aprueba el PR de este archivo.
 | Ivo | ☐ |
 | Thiago | ☐ |
 | Facundo | ☐ |
-| Agustín | ☐ |
+| Agustín | X |
 | Vicente | ☐ |
 | Nicolás | ☐ |
 
