@@ -1,0 +1,52 @@
+# ALG-M1 · Regla de `tiene_rol` (B5 · lógica)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-regla-tiene-rol.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `usuario`, `rol`, `usuario_rol` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Responde una sola pregunta: **¿este usuario tiene este rol?** Es la regla que usan las demás fichas para decidir si alguien puede hacer algo (por ejemplo, ser administrador para habilitar una cuenta).
+
+## Qué recibe
+
+| Dato | Obligatorio | Detalle |
+|---|---|---|
+| usuario | Sí | El usuario a consultar (su id), o ninguno si no hay sesión |
+| nombre_rol | Sí | Ej.: `talento`, `empresa`, `particular`, `administrador`, `moderador` |
+
+## Qué devuelve
+`verdadero` o `falso`.
+
+## Pasos
+1. Limpiar `nombre_rol`: sacar espacios de los costados y pasarlo a minúsculas.
+2. Si `nombre_rol` no existe en la tabla `rol` → error `RolInexistente` (así se detectan los errores de tipeo).
+3. Si no hay usuario, o el usuario no existe → `falso`.
+4. Si la cuenta tiene `habilitado = falso` o `eliminado_en` completo → `falso`.
+5. Si hay una fila en `usuario_rol` que une al usuario con ese rol → `verdadero`.
+6. Si no → `falso`.
+
+**Regla clave:** tener el rol en la tabla no alcanza. La cuenta además tiene que estar **habilitada y no dada de baja**.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| RolInexistente | `nombre_rol` no es ningún rol de la tabla `rol` |
+
+## Ejemplos (7)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Talento habilitado, `tiene_rol(talento)` | `verdadero` |
+| 2 | Normal | Talento habilitado, `tiene_rol(administrador)` | `falso` |
+| 3 | Raro | Usuario con dos roles (administrador y moderador), `tiene_rol(moderador)` | `verdadero` |
+| 4 | Raro | Se consulta `" Talento "` con mayúscula y espacios | Se limpia a `talento` y responde normalmente |
+| 5 | Raro | Administrador dado de baja, `tiene_rol(administrador)` | `falso` |
+| 6 | Raro | Talento sin habilitar, `tiene_rol(talento)` | `falso` |
+| 7 | Error | `tiene_rol(superadmin)` | `RolInexistente` |
+
+## Preguntas para Ivo
+1. ¿`tiene_rol` debe devolver `falso` si la cuenta no está habilitada, o eso se controla aparte en cada ficha? Lo incluí acá para que ninguna ficha se olvide.
+2. ¿Los nombres de rol (administrador, moderador, "administrador nivel 2") coinciden con los del contrato de Sebas?
+3. ¿Sin sesión se responde `falso` o se considera error? Elegí `falso`.
