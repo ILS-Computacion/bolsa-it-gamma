@@ -1,0 +1,58 @@
+# ALG-M1 · Restablecer contraseña por el administrador (B5 · lógica)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-restablecer-contrasena.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador (propuesta)**
+> Usa las tablas: `usuario`, `usuario_rol` y Supabase Auth
+
+## Qué hace
+Permite que un **administrador** le ponga una contraseña nueva a otra persona que olvidó la suya. Es una **propuesta** para el caso "Recuperar el acceso" que funciona con correos ficticios: no se envían correos.
+
+## Qué recibe
+
+| Dato | Obligatorio | Regla *(límites propuestos, confirmar con Ivo)* |
+|---|---|---|
+| usuario_actual | Sí | La persona con sesión abierta. Tiene que ser administrador |
+| usuario_id | Sí | La cuenta a la que se le cambia la contraseña |
+| contrasena_nueva | Sí | Entre 8 y 72 caracteres. Misma regla que al registrarse |
+
+## Qué devuelve
+Confirmación de que la contraseña se cambió. **Nunca** devuelve la contraseña, ni se escribe en registros ni mensajes.
+
+## Pasos
+1. Verificar que hay sesión abierta. Si no → `SinSesion`.
+2. Verificar que `usuario_actual` tiene rol administrador (regla `tiene_rol`). Si no → `SinPermiso`.
+3. Buscar la cuenta `usuario_id`. Si no existe → `UsuarioNoEncontrado`.
+4. Si la cuenta tiene `eliminado_en` completo → `CuentaDadaDeBaja`.
+5. Validar `contrasena_nueva`. Si falla → `ContrasenaInvalida`.
+6. Cambiar la contraseña en Supabase Auth.
+7. Cerrar las sesiones abiertas de esa cuenta, para que la contraseña vieja deje de servir.
+8. Devolver la confirmación.
+
+**No se toca:** `habilitado`, rol, perfil ni ningún otro dato.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| SinSesion | No hay sesión abierta |
+| SinPermiso | Quien pide no es administrador |
+| UsuarioNoEncontrado | El `usuario_id` no existe |
+| CuentaDadaDeBaja | La cuenta fue dada de baja |
+| ContrasenaInvalida | La contraseña nueva no cumple el largo |
+
+## Ejemplos (6)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Administrador le pone una contraseña nueva de 10 caracteres a un talento | Se confirma; el talento inicia sesión con la nueva y la vieja ya no sirve |
+| 2 | Raro | Administrador cambia la contraseña de una cuenta no habilitada | Se cambia, pero la cuenta sigue sin poder entrar hasta que la habiliten |
+| 3 | Raro | El talento tenía una sesión abierta cuando el administrador le cambia la contraseña | Su sesión se cierra |
+| 4 | Error | Un talento intenta restablecer la contraseña de otro | `SinPermiso`; no cambia nada |
+| 5 | Error | Administrador envía una contraseña de 4 caracteres | `ContrasenaInvalida`; no cambia nada |
+| 6 | Error | Administrador intenta restablecer la contraseña de una cuenta dada de baja | `CuentaDadaDeBaja` |
+
+## Preguntas para Ivo
+1. ¿Cómo le avisa el administrador la contraseña nueva a la persona? Queda fuera del sistema (por ejemplo, en persona).
+2. ¿Un administrador puede restablecer su **propia** contraseña por este camino? No lo prohibí.
+3. ¿Cerrar las sesiones abiertas (paso 7) es obligatorio o es una mejora opcional?
