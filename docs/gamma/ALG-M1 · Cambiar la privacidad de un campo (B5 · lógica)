@@ -1,0 +1,61 @@
+# ALG-M1 · Cambiar la privacidad de un campo (B5 · lógica)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-cambiar-privacidad.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `talento_it`, `privacidad_campo` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Permite que un talento elija quién ve cada uno de sus datos: **público**, **solo empresas** o **privado**. El cambio vale para las próximas consultas del perfil.
+
+## Qué recibe
+
+| Dato | Obligatorio | Detalle |
+|---|---|---|
+| usuario_actual | Sí | La persona con sesión abierta. Solo cambia la privacidad de **su** perfil |
+| campo | Sí | Uno de: `resumen`, `habilidades`, `enlace_portfolio`, `telefono`, `curriculum_archivo` |
+| visibilidad | Sí | `publico`, `empresas` o `privado` |
+
+**No configurables** (su visibilidad es fija): `nombre_publico`, `nivel`, `categoria_id`.
+
+## Qué devuelve
+El campo y su visibilidad actual.
+
+## Pasos
+1. Verificar que hay sesión abierta. Si no → `SinSesion`.
+2. Verificar que la cuenta está habilitada y no dada de baja. Si no → `CuentaNoActiva`.
+3. Verificar que tiene rol talento. Si no → `SinPermiso`.
+4. Si `campo` no está en la lista de configurables → `CampoNoConfigurable`.
+5. Si `visibilidad` no es una de las tres → `VisibilidadInvalida`.
+6. Guardar en `privacidad_campo`: si ya hay una fila para ese campo se actualiza, si no se crea.
+7. Devolver el campo y la visibilidad.
+
+**Después del cambio:**
+- `publico`: lo ve cualquier visitante.
+- `empresas`: lo ven solo los publicantes con cuenta habilitada.
+- `privado`: lo ve solo el dueño (y el administrador cuando lo necesita para su tarea).
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| SinSesion | No hay sesión abierta |
+| CuentaNoActiva | La cuenta no está habilitada o fue dada de baja |
+| SinPermiso | El usuario no tiene rol talento |
+| CampoNoConfigurable | El campo no existe o su visibilidad es fija (incluye edad, género, origen, domicilio) |
+| VisibilidadInvalida | La visibilidad no es `publico`, `empresas` ni `privado` |
+
+## Ejemplos (6)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Talento pone `telefono` en `privado` | Se guarda; una empresa que consulta el perfil ya no ve el teléfono |
+| 2 | Raro | Talento pone `resumen` en `empresas` dos veces seguidas | Las dos veces devuelve `empresas`; queda una sola fila, sin error |
+| 3 | Raro | Talento pone `curriculum_archivo` en `publico` | Se guarda; cualquier visitante puede ver el currículum |
+| 4 | Error | Talento intenta cambiar `nombre_publico` | `CampoNoConfigurable` |
+| 5 | Error | Talento envía `visibilidad = "todos"` | `VisibilidadInvalida`; no cambia nada |
+| 6 | Error | Una empresa intenta cambiar la privacidad de `telefono` | `SinPermiso` |
+
+## Preguntas para Ivo
+1. ¿Una empresa puede configurar la privacidad de sus datos de contacto? Supuse que no, solo el talento.
+2. ¿`nombre_publico` es siempre público? (misma pregunta que en el modelo de datos)
