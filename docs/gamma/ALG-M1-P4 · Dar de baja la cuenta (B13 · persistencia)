@@ -1,0 +1,61 @@
+# ALG-M1-P4 · Dar de baja la cuenta (B13 · persistencia)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-P4-dar-de-baja-cuenta.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `usuario`, `borrador_perfil` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Da de baja una cuenta **sin borrar nada**: solo completa la fecha `eliminado_en`. Desde ese momento la cuenta no puede iniciar sesión y deja de aparecer en perfiles y búsquedas.
+
+## Qué recibe
+
+| Dato | Obligatorio | Detalle |
+|---|---|---|
+| usuario_actual | Sí | La persona con sesión abierta |
+| usuario_id | No | La cuenta a dar de baja. Si no viene, es la propia |
+| confirmacion | Sí | Debe ser `verdadero`. Evita dar de baja por error |
+
+Quién puede pedirlo: el **dueño** de la cuenta. *(Si un administrador también puede, ver pregunta 1.)*
+
+## Qué devuelve
+Confirmación con la fecha y hora de la baja (`eliminado_en`).
+
+## Pasos
+1. Verificar que hay sesión abierta. Si no → `SinSesion`.
+2. Si `confirmacion` no es verdadero → `FaltaConfirmacion`.
+3. Buscar la cuenta. Si no existe → `UsuarioNoEncontrado`.
+4. Verificar que quien pide es el dueño de la cuenta. Si no → `SinPermiso`.
+5. Si la cuenta ya tiene `eliminado_en` completo → `YaDadaDeBaja` (no se cambia la fecha original).
+6. Completar `eliminado_en` con la fecha y hora actual.
+7. Eliminar el borrador de perfil pendiente, si hay (no tiene sentido conservarlo).
+8. Cerrar la sesión de la persona.
+9. Devolver la confirmación.
+
+**No se toca:** correo, nombre, rol, perfil, privacidad ni ningún otro dato. Todo queda guardado.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| SinSesion | No hay sesión abierta |
+| FaltaConfirmacion | `confirmacion` no es verdadero |
+| UsuarioNoEncontrado | El `usuario_id` no existe |
+| SinPermiso | Quien pide no es el dueño de la cuenta |
+| YaDadaDeBaja | La cuenta ya tenía `eliminado_en` |
+
+## Ejemplos (5)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Talento con sesión pide baja de su cuenta con `confirmacion = verdadero` | `eliminado_en` queda con la fecha de hoy; se cierra la sesión; no se borra ningún dato |
+| 2 | Raro | Pide la baja teniendo un borrador de perfil guardado | La baja se hace y el borrador se elimina |
+| 3 | Raro | Después de la baja intenta iniciar sesión con el correo y la contraseña correctos | No entra: ve "Correo o contraseña incorrectos" |
+| 4 | Error | Pide la baja con `confirmacion = falso` | `FaltaConfirmacion`; la cuenta sigue activa |
+| 5 | Error | Un talento intenta dar de baja la cuenta de otro usuario | `SinPermiso`; no se cambia nada |
+| 6 | Error | Pide la baja de una cuenta que ya tiene `eliminado_en` | `YaDadaDeBaja`; la fecha original se mantiene |
+
+## Preguntas para Ivo
+1. ¿El administrador también puede dar de baja cuentas ajenas? (Ver CU "Gestionar usuarios" del M4.) Si sí, hay que agregarlo al paso 4 y sumar un ejemplo.
+2. ¿Hay que impedir que se dé de baja el **único** administrador? Lo dejé sin regla.
+3. ¿Se puede reactivar una cuenta dada de baja? Esta ficha no lo contempla.
