@@ -25,12 +25,12 @@ La **Bolsa de Trabajo IT** conecta **publicantes** (empresas o particulares) que
 
 | Pieza | Uso |
 |---|---|
-| **Reflex** (Python) | Interfaz y lógica |
+| **Flask** (Python) con plantillas HTML (Jinja2) | Interfaz y lógica |
 | **Supabase** | Base de datos (Postgres con RLS) y **Supabase Auth** |
-| **Reflex Cloud** | Ambientes de test y producción |
+| **Render** (plan gratis) | Ambientes de test y producción |
 | pytest + GitHub Actions | Tests y ticket-check en cada PR |
 
-Descartados: Railway, FastAPI, Nextcloud, Paca-AI y autenticación propia.
+Descartados: Reflex y Reflex Cloud (14/11), Railway, FastAPI, Nextcloud, Paca-AI y autenticación propia.
 
 ### ADR 0004 · Autenticación (resumen)
 

@@ -6,7 +6,7 @@
 
 ## 1. Qué es este repo
 
-Paquete Python del equipo gamma: **M1 (usuarios)** y **M4 (panel y moderación)** de la Bolsa de Trabajo IT. Stack: **Reflex + Supabase (Auth y Postgres con RLS) + Reflex Cloud**.
+Paquete Python del equipo gamma: **M1 (usuarios)** y **M4 (panel y moderación)** de la Bolsa de Trabajo IT. Stack: **Flask (con plantillas HTML Jinja2) + Supabase (Auth y Postgres con RLS) + Render (plan gratis)**. Reflex y Reflex Cloud están descartados (14/11): no los uses.
 
 Gamma **no depende** de alfa (M2) ni de beta (M3): solo expone y consume contratos. Lo que todavía no existe se reemplaza con **simulados**.
 
@@ -29,9 +29,12 @@ bolsa-it-gamma/
 ├── AGENTS.md
 ├── CLAUDE.md                  # apunta a este archivo
 ├── gamma/
-│   ├── m1/                    # usuarios: login, registro, roles, perfil, baja
-│   ├── m4/                    # panel (P40) y cola de moderación (P42)
-│   └── contratos/             # tipos y funciones que gamma expone
+│   ├── __init__.py            # create_app(): fábrica de la app Flask
+│   ├── m1/                    # usuarios: lógica + rutas (blueprint m1)
+│   ├── m4/                    # panel (P40) y cola de moderación (P42) (blueprint m4)
+│   ├── contratos/             # tipos y funciones que gamma expone
+│   ├── templates/             # plantillas HTML (Jinja2), una carpeta por módulo
+│   └── static/                # CSS y JS mínimos
 ├── simulados/                 # reemplazos de M2, M3, T6 y Auth mientras no existan
 ├── tests/
 │   ├── m1/
@@ -60,8 +63,12 @@ Si la estructura real del repo es distinta, seguí la real y avisá la diferenci
 uv sync                      # instalar dependencias
 uv run pytest                # todos los tests
 uv run pytest tests/m1       # solo M1
-uv run reflex run            # levantar la app en local
+uv run flask --app gamma run --debug   # levantar la app en local
 ```
+
+- La lógica (contratos, reglas) va en funciones Python puras, separadas de las rutas Flask: así se prueba sin levantar el servidor.
+- Las rutas se prueban con el cliente de pruebas de Flask (`app.test_client()`), nunca con un navegador real.
+- En Render la app arranca con `gunicorn "gamma:create_app()"`.
 
 Antes de terminar una tarea, corré `uv run pytest` completo y mostrá el resultado. No digas que algo anda sin haberlo corrido.
 

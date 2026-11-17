@@ -1,4 +1,4 @@
-# Constitución del equipo gamma · v1.0
+# Constitución del equipo gamma · v1.1
 
 > Fecha: 05/11/2026 · Reemplaza al borrador v0.1 · Aprobada en PR: [#]
 > Puede agregar reglas a la Constitución General, pero no contradecirla. La valida Hugo.
@@ -62,7 +62,7 @@ Una puerta es el punto donde alguien distinto del autor tiene que aprobar para s
 
 ## 4. Herramientas y repositorios
 
-- **Stack:** Reflex + Supabase (Supabase Auth) + Reflex Cloud. Descartados: Railway, FastAPI, Nextcloud y los agentes de Paca.
+- **Stack:** Flask (con plantillas HTML) + Supabase (Supabase Auth) + Render (plan gratis). Descartados: Reflex y Reflex Cloud (14/11), Railway, FastAPI, Nextcloud y los agentes de Paca.
 - **IA:**
   - El código del producto lo genera solo el líder, con Claude Code.
   - El resto usa Cursor (versión gratuita) para tests, fichas, bocetos, configuración y revisiones asistidas.
@@ -100,7 +100,7 @@ Cada integrante aprueba el PR de este archivo.
 
 | Integrante | Aprobó |
 |---|---|
-| Sebastián | X |
+| Sebastián | ☐ |
 | Ivo | ☐ |
 | Thiago | ☐ |
 | Facundo | ☐ |
@@ -114,3 +114,4 @@ Cada integrante aprueba el PR de este archivo.
 |---|---|---|
 | 0.1 | — | Borrador inicial |
 | 1.0 | 05/11/2026 | Roles actualizados (líder Sebas, revisor Ivo), método, puertas, herramientas, datos y desempate |
+| 1.1 | 14/11/2026 | Stack: Flask + Render en lugar de Reflex + Reflex Cloud (decisión de Hugo) |
