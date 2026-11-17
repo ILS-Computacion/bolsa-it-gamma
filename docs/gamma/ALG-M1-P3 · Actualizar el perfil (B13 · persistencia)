@@ -1,0 +1,92 @@
+# ALG-M1-P3 · Actualizar el perfil (B13 · persistencia)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-P3-actualizar-perfil.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `talento_it`, `usuario`, `borrador_perfil` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Permite que un usuario cambie los datos de su perfil en dos tiempos: primero **guarda un borrador** y, recién cuando **confirma**, los cambios se aplican al perfil real. Mientras no confirme, nadie ve los cambios y el perfil no se modifica.
+
+## Qué recibe
+
+| Dato | Obligatorio | Detalle |
+|---|---|---|
+| usuario_actual | Sí | La persona con sesión abierta. Solo puede editar **su propio** perfil |
+| accion | Sí | `guardar_borrador`, `confirmar` o `descartar` |
+| cambios | Solo con `guardar_borrador` | Campos a cambiar y su valor nuevo |
+
+**Campos que se pueden cambiar** y reglas de cada uno *(los límites son una propuesta, confirmar con Ivo)*:
+
+| Campo | Regla |
+|---|---|
+| nombre_publico | No vacío, entre 1 y 80 caracteres |
+| resumen | Hasta 500 caracteres (puede quedar vacío) |
+| habilidades | Lista de hasta 20 ítems, cada uno de 1 a 40 caracteres |
+| enlace_portfolio | Empieza con `http://` o `https://` (puede quedar vacío) |
+| telefono | Entre 6 y 20 caracteres: dígitos, `+`, espacios y guiones (puede quedar vacío) |
+| curriculum_archivo | Archivo permitido por el sistema (puede quedar vacío) |
+
+**No se pueden cambiar por acá:** `nivel` y `categoria_id` *(supuesto, ver pregunta 1)*, `correo`, `habilitado`, `eliminado_en`. **Nunca existen** edad, género, origen ni domicilio: si llegan, se rechazan.
+
+## Qué devuelve
+
+| Acción | Si sale bien |
+|---|---|
+| guardar_borrador | El borrador guardado, con la fecha. El perfil real **no** cambia |
+| confirmar | El perfil actualizado. El borrador desaparece |
+| descartar | Confirmación de que el borrador se eliminó. El perfil real **no** cambia |
+
+## Pasos
+
+**Siempre, antes de empezar**
+1. Verificar que hay sesión abierta. Si no → `SinSesion`.
+2. Verificar que la cuenta está habilitada y no dada de baja. Si no → `CuentaNoActiva`.
+3. Verificar que la cuenta tiene rol talento. Si no → `SinPermiso`.
+
+**guardar_borrador**
+1. Si `cambios` viene vacío → `SinCambios`.
+2. Si hay un campo que no se puede cambiar → `CampoNoEditable` (indica cuál).
+3. Validar cada valor con la tabla de arriba. Si alguno falla → `DatoInvalido` (indica el campo). No se guarda nada.
+4. Guardar los cambios en `borrador_perfil`. Si ya había un borrador, se **reemplaza entero** (no se mezcla).
+5. Devolver el borrador.
+
+**confirmar**
+1. Buscar el borrador del usuario. Si no hay → `SinBorrador`.
+2. Volver a validar cada valor del borrador (las reglas pueden haber cambiado).
+3. Aplicar **todos** los cambios al perfil en una sola operación: o se aplican todos o ninguno.
+4. Eliminar el borrador.
+5. Devolver el perfil actualizado.
+
+**descartar**
+1. Si no hay borrador → `SinBorrador`.
+2. Eliminar el borrador y devolver confirmación.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| SinSesion | No hay sesión abierta |
+| CuentaNoActiva | La cuenta no está habilitada o fue dada de baja |
+| SinPermiso | El usuario no tiene rol talento |
+| AccionInvalida | `accion` no es una de las tres permitidas |
+| SinCambios | `guardar_borrador` sin ningún campo |
+| CampoNoEditable | Se intenta cambiar un campo que no se puede (incluye edad, género, origen, domicilio) |
+| DatoInvalido | Un valor no cumple su regla (indica el campo) |
+| SinBorrador | `confirmar` o `descartar` sin borrador guardado |
+
+## Ejemplos (5)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Talento habilitado guarda borrador con `resumen = "Estudiante de informática, busco mi primera experiencia"` y luego confirma | Borrador guardado; al confirmar, el perfil tiene el resumen nuevo y no queda borrador |
+| 2 | Raro | Guarda un borrador con `telefono`, después otro con solo `resumen` y confirma | El segundo reemplaza al primero: se aplica solo el resumen y el teléfono **no** cambia |
+| 3 | Raro | Guarda un borrador y lo descarta | El perfil sigue igual y no queda borrador |
+| 4 | Error | Guarda borrador con `enlace_portfolio = "mi-sitio"` | `DatoInvalido` (enlace_portfolio); no se guarda nada |
+| 5 | Error | Guarda borrador con `edad = 17` | `CampoNoEditable`; no se guarda nada |
+| 6 | Error | Confirma sin haber guardado un borrador | `SinBorrador` |
+
+## Preguntas para Ivo
+1. ¿`nivel` (trainee, junior, freelancer) puede cambiarlo el propio talento? Supuse que no por este flujo.
+2. ¿Los límites de longitud y formato propuestos están bien?
+3. ¿Qué hace la página 14 del documento de requisitos exactamente: ¿el borrador vence o dura hasta que se confirma o descarta? Supuse que dura.
