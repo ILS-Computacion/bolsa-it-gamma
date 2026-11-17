@@ -1,0 +1,71 @@
+# ALG-M1 · Registrar talento (B5 · lógica)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-registrar-talento.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `usuario`, `usuario_rol`, `talento_it`, `categoria` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Crea la cuenta de un talento nuevo. La cuenta nace **sin habilitar**: no puede iniciar sesión hasta que un administrador la habilite.
+
+## Qué recibe
+
+| Dato | Obligatorio | Regla *(límites propuestos, confirmar con Ivo)* |
+|---|---|---|
+| correo | Sí | Formato de correo válido, hasta 254 caracteres. No distingue mayúsculas de minúsculas |
+| contrasena | Sí | Entre 8 y 72 caracteres. La guarda Supabase Auth, nunca nuestra base |
+| nombre_publico | Sí | Entre 1 y 80 caracteres |
+| nivel | Sí | `trainee`, `junior` o `freelancer` |
+| categoria_id | No | Una categoría activa. Si no viene, se usa "IT" |
+
+**Nunca se pide:** edad, género, origen ni domicilio.
+
+## Qué devuelve
+- `usuario_id` de la cuenta nueva.
+- `habilitado = falso`.
+- Un mensaje para mostrar: "Tu cuenta fue creada. Cuando un administrador la habilite vas a poder ingresar."
+
+**No se abre sesión.**
+
+## Pasos
+1. Si falta correo, contraseña, nombre público o nivel → `FaltanDatos` (indica cuál).
+2. Validar el formato del correo. Si falla → `CorreoInvalido`.
+3. Validar la contraseña. Si falla → `ContrasenaInvalida`.
+4. Validar `nombre_publico`. Si falla → `DatoInvalido` (nombre_publico).
+5. Si `nivel` no es uno de los tres permitidos → `NivelInvalido`.
+6. Resolver la categoría: si no viene, buscar "IT"; si viene, verificar que existe y está activa. Si no → `CategoriaInvalida`.
+7. Si ya existe una cuenta con ese correo (sin importar mayúsculas) → `CorreoYaRegistrado`.
+8. Crear todo **en una sola operación** (o se crea todo o no se crea nada):
+   - la cuenta en Supabase Auth;
+   - el `usuario` con `habilitado = falso`, `eliminado_en` vacío y `creado_en` = ahora;
+   - la fila de `usuario_rol` con el rol talento;
+   - el `talento_it` con nivel y categoría, y la visibilidad por defecto de cada campo.
+9. Devolver el resultado.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| FaltanDatos | Falta un dato obligatorio |
+| CorreoInvalido | El correo no tiene formato válido |
+| ContrasenaInvalida | La contraseña no cumple el largo |
+| DatoInvalido | `nombre_publico` no cumple su regla |
+| NivelInvalido | El nivel no es trainee, junior ni freelancer |
+| CategoriaInvalida | La categoría no existe o no está activa |
+| CorreoYaRegistrado | Ya hay una cuenta con ese correo |
+
+## Ejemplos (5)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | correo `test-ana@ejemplo.com`, contraseña de 10 caracteres, nombre "Ana P.", nivel `junior`, sin categoría | Cuenta creada con rol talento, categoría IT y `habilitado = falso`; no hay sesión |
+| 2 | Raro | Se registra `Test-Ana@Ejemplo.com` cuando ya existe `test-ana@ejemplo.com` | `CorreoYaRegistrado`: se trata como el mismo correo |
+| 3 | Raro | Un talento recién registrado intenta iniciar sesión | No entra: ve "Correo o contraseña incorrectos" hasta que lo habiliten |
+| 4 | Error | Contraseña de 5 caracteres | `ContrasenaInvalida`; no se crea nada |
+| 5 | Error | Nivel `senior` | `NivelInvalido`; no se crea nada |
+| 6 | Error | Falla la creación del perfil después de crear la cuenta en Supabase Auth | Se deshace todo: no queda cuenta a medias |
+
+## Preguntas para Ivo
+1. `CorreoYaRegistrado` le dice a quien se registra que ese correo existe. En el login evitamos revelarlo. ¿Se acepta acá, o se responde igual que si saliera bien?
+2. ¿Los largos de contraseña (8 a 72) coinciden con lo que exige Supabase Auth en nuestra configuración?
+3. ¿El rol "talento" ya existe cargado en la tabla `rol` o lo crea esta función?
