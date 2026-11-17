@@ -1,0 +1,52 @@
+# ALG-M1 · Habilitar cuenta (B5 · lógica)
+
+> Ruta en el repo: `docs/gamma/fichas/m1/ALG-M1-habilitar-cuenta.md`
+> Ticket: GAMMA-M1-013 · Tarea: ANA-07 · Autor: Thiago · Valida: Ivo
+> REQ / PRD: *(completar con el REQ del contrato)* · Estado: **Borrador**
+> Usa las tablas: `usuario`, `rol`, `usuario_rol` (ver `modelo-datos-m1.md`)
+
+## Qué hace
+Permite que un **administrador** autorice una cuenta nueva. Pasa `habilitado` de falso a verdadero y, desde ese momento, la persona puede iniciar sesión.
+
+## Qué recibe
+
+| Dato | Obligatorio | Detalle |
+|---|---|---|
+| usuario_actual | Sí | La persona con sesión abierta. Tiene que ser administrador |
+| usuario_id | Sí | La cuenta que se quiere habilitar |
+
+## Qué devuelve
+La cuenta con `habilitado = verdadero` (id, nombre público y rol). No devuelve el correo.
+
+## Pasos
+1. Verificar que hay sesión abierta. Si no → `SinSesion`.
+2. Verificar que `usuario_actual` tiene rol administrador (regla `tiene_rol`). Si no → `SinPermiso`.
+3. Buscar la cuenta `usuario_id`. Si no existe → `UsuarioNoEncontrado`.
+4. Si la cuenta tiene `eliminado_en` completo → `CuentaDadaDeBaja`.
+5. Si `habilitado` ya es verdadero → no cambiar nada y devolver la cuenta (**no es un error**).
+6. Poner `habilitado = verdadero`.
+7. Devolver la cuenta.
+
+## Errores
+
+| Error | Cuándo |
+|---|---|
+| SinSesion | No hay sesión abierta |
+| SinPermiso | Quien pide no es administrador |
+| UsuarioNoEncontrado | El `usuario_id` no existe |
+| CuentaDadaDeBaja | La cuenta fue dada de baja |
+
+## Ejemplos (6)
+
+| # | Tipo | Entrada | Resultado |
+|---|---|---|---|
+| 1 | Normal | Administrador habilita a un talento recién registrado | `habilitado = verdadero`; el talento ya puede iniciar sesión |
+| 2 | Raro | Administrador habilita a un talento que ya estaba habilitado | No cambia nada y no da error |
+| 3 | Raro | Administrador habilita una cuenta de empresa | Funciona igual: queda `habilitado = verdadero` |
+| 4 | Error | Un talento intenta habilitar a otro | `SinPermiso`; no cambia nada |
+| 5 | Error | Administrador envía un `usuario_id` que no existe | `UsuarioNoEncontrado` |
+| 6 | Error | Administrador intenta habilitar una cuenta dada de baja | `CuentaDadaDeBaja`; no cambia nada |
+
+## Preguntas para Ivo
+1. ¿Hace falta poder **deshabilitar** una cuenta después? Esta ficha solo habilita.
+2. ¿Hay que registrar quién habilitó y cuándo? Hoy el modelo no tiene esos campos.
